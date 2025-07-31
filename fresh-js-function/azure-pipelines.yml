@@ -1,0 +1,42 @@
+trigger:
+- master
+
+stages:
+- stage: Build
+  displayName: 'Build'
+  jobs:
+  - job: BuildJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+    - script: npm install
+      displayName: 'Install Dependencies'
+
+- stage: Test
+  displayName: 'Test'
+  dependsOn: Build
+  jobs:
+  - job: TestJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: npm test
+      displayName: 'Run Tests'
+
+- stage: Deploy
+  displayName: 'Deploy'
+  dependsOn: Test
+  jobs:
+  - job: DeployJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureFunctionApp@1
+      inputs:
+        azureSubscription: 'your-service-connection-name'  # update accordingly
+        appType: functionApp
+        appName: 'your-function-app-name'                   # update accordingly
+        package: '.'
