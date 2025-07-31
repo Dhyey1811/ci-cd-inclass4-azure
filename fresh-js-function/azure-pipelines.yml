@@ -1,9 +1,8 @@
 trigger:
-- master
+- main
 
 stages:
 - stage: Build
-  displayName: 'Build'
   jobs:
   - job: BuildJob
     pool:
@@ -11,32 +10,42 @@ stages:
     steps:
     - task: NodeTool@0
       inputs:
-        versionSpec: '18.x'
-    - script: npm install
+        versionSpec: '16.x'
+      displayName: 'Install Node.js'
+      
+    - script: |
+        npm install
       displayName: 'Install Dependencies'
 
 - stage: Test
-  displayName: 'Test'
   dependsOn: Build
   jobs:
   - job: TestJob
     pool:
       vmImage: 'ubuntu-latest'
     steps:
-    - script: npm test
-      displayName: 'Run Tests'
+    - script: |
+        echo "Running tests (none configured yet)"
+      displayName: 'Test placeholder'
 
 - stage: Deploy
-  displayName: 'Deploy'
   dependsOn: Test
   jobs:
   - job: DeployJob
     pool:
       vmImage: 'ubuntu-latest'
     steps:
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/function.zip'
+        replaceExistingArchive: true
+
     - task: AzureFunctionApp@1
       inputs:
-        azureSubscription: 'your-service-connection-name'  # update accordingly
-        appType: functionApp
-        appName: 'your-function-app-name'                   # update accordingly
-        package: '.'
+        azureSubscription: 'azure-dhyey-conn'       # 👈 Must match what you created earlier
+        appType: 'functionApp'
+        appName: 'YOUR-FUNCTION-APP-NAME'           # 👈 Replace with your actual function app name in Azure
+        package: '$(Build.ArtifactStagingDirectory)/function.zip'
